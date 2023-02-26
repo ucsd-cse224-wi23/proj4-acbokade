@@ -49,9 +49,9 @@ func main() {
 
 	// Use tail arguments to hold BlockStore address
 	args := flag.Args()
-	blockStoreAddr := ""
-	if len(args) == 1 {
-		blockStoreAddr = args[0]
+	blockStoreAddrs := []string{}
+	if len(args) >= 1 {
+		blockStoreAddrs = args
 	}
 
 	// Valid service type argument
@@ -73,10 +73,10 @@ func main() {
 		log.SetOutput(ioutil.Discard)
 	}
 
-	log.Fatal(startServer(addr, strings.ToLower(*service), blockStoreAddr))
+	log.Fatal(startServer(addr, strings.ToLower(*service), blockStoreAddrs))
 }
 
-func startServer(hostAddr string, serviceType string, blockStoreAddr string) error {
+func startServer(hostAddr string, serviceType string, blockStoreAddrs []string) error {
 	_, exists := SERVICE_TYPES[serviceType]
 	if !exists {
 		log.Println("Service type %s not supported", serviceType)
@@ -85,7 +85,7 @@ func startServer(hostAddr string, serviceType string, blockStoreAddr string) err
 	grpcServer := grpc.NewServer()
 
 	if serviceType == BOTH || serviceType == META {
-		surfstore.RegisterMetaStoreServer(grpcServer, surfstore.NewMetaStore(blockStoreAddr))
+		surfstore.RegisterMetaStoreServer(grpcServer, surfstore.NewMetaStore(blockStoreAddrs))
 	}
 
 	if serviceType == BOTH || serviceType == BLOCK {

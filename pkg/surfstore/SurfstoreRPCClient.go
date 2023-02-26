@@ -80,6 +80,27 @@ func (surfClient *RPCClient) HasBlocks(blockHashesIn []string, blockStoreAddr st
 	return conn.Close()
 }
 
+func (surfClient *RPCClient) GetBlockHashes(blockStoreAddr string, blockHashes *[]string) error {
+	conn, err := connectToGrpcServer(blockStoreAddr)
+	if err != nil {
+		return err
+	}
+	rpcClient := NewBlockStoreClient(conn)
+	// perform the call
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	retBlockHashes, err := rpcClient.GetBlockHashes(ctx, &emptypb.Empty{})
+	if err != nil {
+		conn.Close()
+		return err
+	}
+	blockHashes = &retBlockHashes.Hashes
+
+	// close the connection
+	return conn.Close()
+}
+
+
 func (surfClient *RPCClient) GetFileInfoMap(serverFileInfoMap *map[string]*FileMetaData) error {
 	conn, err := connectToGrpcServer(surfClient.MetaStoreAddr)
 	if err != nil {
@@ -213,8 +234,4 @@ func NewSurfstoreRPCClient(hostPort, baseDir string, blockSize int) RPCClient {
 func connectToGrpcServer(storeAddr string) (*grpc.ClientConn, error) {
 	conn, err := grpc.Dial(storeAddr, grpc.WithInsecure())
 	return conn, err
-}
-
-func (surfClient *RPCClient) GetBlockHashes(blockStoreAddr string, blockHashes *[]string) error {
-	panic("todo")
 }

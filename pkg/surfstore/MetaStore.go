@@ -77,7 +77,7 @@ func (m *MetaStore) GetBlockStoreAddrs(ctx context.Context, _ *emptypb.Empty) (*
 // This line guarantees all method for MetaStore are implemented
 var _ MetaStoreInterface = new(MetaStore)
 
-func NewMetaStore(blockStoreAddr string) *MetaStore {
+func NewMetaStore(blockStoreAddrs []string) *MetaStore {
 	return &MetaStore{
 		FileMetaMap:        map[string]*FileMetaData{},
 		BlockStoreAddrs:    blockStoreAddrs,
