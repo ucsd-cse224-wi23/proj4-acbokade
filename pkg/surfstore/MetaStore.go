@@ -81,6 +81,6 @@ func NewMetaStore(blockStoreAddr string) *MetaStore {
 	return &MetaStore{
 		FileMetaMap:        map[string]*FileMetaData{},
 		BlockStoreAddrs:    blockStoreAddrs,
-		ConsistentHashRing: consistentHashRing,
+		ConsistentHashRing: NewConsistentHashRing(blockStoreAddrs),
 	}
 }
