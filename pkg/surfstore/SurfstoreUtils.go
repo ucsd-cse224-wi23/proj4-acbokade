@@ -130,12 +130,12 @@ func ClientSync(client RPCClient) {
 	}
 	// log.Println("filesToDownload", filesToDownload)
 	// Get BlockStoreAddr
-	var blockStoreAddr string
-	client.GetBlockStoreAddr(&blockStoreAddr)
+	var blockStoreAddrs []string
+	client.GetBlockStoreAddrs(&blockStoreAddrs)
 
 	// Check the blocks to be downloaded
 	for fileToDownload := range filesToDownload {
-		downloadFile(fileToDownload, client, remoteIndex, localIndex, blockStoreAddr)
+		downloadFile(fileToDownload, client, remoteIndex, localIndex, blockStoreAddrs)
 	}
 
 	// Check the blocks to be downloaded
@@ -181,7 +181,7 @@ func ClientSync(client RPCClient) {
 
 	// Check the blocks to be deleted
 	for fileToDelete := range filesToDelete {
-		deleteFile(fileToDelete, client, localIndex, blockStoreAddr)
+		deleteFile(fileToDelete, client, localIndex, blockStoreAddrs)
 	}
 
 	filesToUpload := make([]string, 0)
@@ -189,14 +189,14 @@ func ClientSync(client RPCClient) {
 	filesToUpload = append(filesToUpload, editedFiles...)
 	// Upload newly added files
 	for _, fileName := range filesToUpload {
-		returnedVersion, err := uploadFile(fileName, client, localIndex, blockStoreAddr)
+		returnedVersion, err := uploadFile(fileName, client, localIndex, blockStoreAddrs)
 		// log.Println("returnedVersion", returnedVersion)
 		if err != nil || returnedVersion == -1 {
 			// download only if it exists in remote index
 			_, remoteExists := remoteIndex[fileName]
 			if remoteExists {
 				// outdated version
-				downloadFile(fileName, client, remoteIndex, localIndex, blockStoreAddr)
+				downloadFile(fileName, client, remoteIndex, localIndex, blockStoreAddrs)
 			}
 		}
 		// else {
@@ -208,7 +208,7 @@ func ClientSync(client RPCClient) {
 	WriteMetaFile(localIndex, client.BaseDir)
 }
 
-func uploadFile(fileName string, client RPCClient, localIndex map[string]*FileMetaData, blockStoreAddr string) (int32, error) {
+func uploadFile(fileName string, client RPCClient, localIndex map[string]*FileMetaData, blockStoreAddrs []string) (int32, error) {
 	localPath := filepath.Join(client.BaseDir, fileName)
 	localFile, err := os.Open(localPath)
 	if err != nil {
@@ -223,6 +223,7 @@ func uploadFile(fileName string, client RPCClient, localIndex map[string]*FileMe
 	fileSize := fileStats.Size()
 	numBlocks := getNumberOfBlocks(fileSize, client.BlockSize)
 	hashList := make([]string, 0)
+	blockHashToBlockDataMap := make(map[string][]byte)
 	for i := 0; i < numBlocks; i++ {
 		blockData := make([]byte, client.BlockSize)
 		bytesRead, err := localFile.Read(blockData)
@@ -232,8 +233,15 @@ func uploadFile(fileName string, client RPCClient, localIndex map[string]*FileMe
 		blockData = blockData[:bytesRead]
 		blockHash := GetBlockHashString(blockData)
 		hashList = append(hashList, blockHash)
-		blockSize := int32(bytesRead)
+		blockHashToBlockDataMap[blockHash] = blockData
+	}
+	var blockStoreMap map[string][]string
+	client.GetBlockStoreMap(hashList, &blockStoreMap)
+	revBlockStoreMap := reverseBlockStoreMap(blockStoreMap)
+	for blockHash, blockData := range blockHashToBlockDataMap {
+		blockSize := int32(len(blockData))
 		blockObject := Block{BlockData: blockData, BlockSize: blockSize}
+		blockStoreAddr := revBlockStoreMap[blockHash]
 		var success bool
 		err = client.PutBlock(&blockObject, blockStoreAddr, &success)
 		if err != nil {
@@ -277,7 +285,7 @@ func deleteLocalFile(fileName string, client RPCClient, remoteIndex map[string]*
 	return nil
 }
 
-func deleteFile(fileName string, client RPCClient, localIndex map[string]*FileMetaData, blockStoreAddr string) (int32, error) {
+func deleteFile(fileName string, client RPCClient, localIndex map[string]*FileMetaData, blockStoreAddrs []string) (int32, error) {
 	version := localIndex[fileName].Version
 	var tombstoneHashList []string = []string{TOMBSTONE_HASHVALUE}
 	localFileMetadata := FileMetaData{Filename: fileName, Version: version+1, BlockHashList: tombstoneHashList}
@@ -300,7 +308,7 @@ func isFileDeleted(fileMetaData *FileMetaData) bool {
 	return false
 }
 
-func downloadFile(fileName string, client RPCClient, remoteIndex map[string]*FileMetaData, localIndex map[string]*FileMetaData, blockStoreAddr string) error {
+func downloadFile(fileName string, client RPCClient, remoteIndex map[string]*FileMetaData, localIndex map[string]*FileMetaData, blockStoreAddrs []string) error {
 	// Check if the file is deleted in the remote index (TOMBSTONE RECORD)
 	if isFileDeleted(remoteIndex[fileName]) {
 		// Copy metadata of file
@@ -320,8 +328,12 @@ func downloadFile(fileName string, client RPCClient, remoteIndex map[string]*Fil
 	// }
 	localIndex[fileName] = remoteIndex[fileName]
 	fileContent := ""
+	var blockStoreMap map[string][]string
+	client.GetBlockStoreMap(remoteIndex[fileName].BlockHashList, &blockStoreMap)
+	revBlockStoreMap := reverseBlockStoreMap(blockStoreMap)
 	for _, blockHash := range remoteIndex[fileName].BlockHashList {
 		var block Block
+		var blockStoreAddr string = revBlockStoreMap[blockHash]
 		err := client.GetBlock(blockHash, blockStoreAddr, &block)
 		if err != nil {
 			log.Println("Error while executing GetBlock call", err)
@@ -330,4 +342,14 @@ func downloadFile(fileName string, client RPCClient, remoteIndex map[string]*Fil
 	}
 	localFile.WriteString(fileContent)
 	return nil
+}
+
+func reverseBlockStoreMap(blockStoreMap map[string][]string) map[string]string {
+	var revBlockStoreMap map[string]string = make(map[string]string)
+	for serverAddr, hashes := range blockStoreMap {
+		for _, hash := range hashes {
+			revBlockStoreMap[hash] = serverAddr
+		}
+	}
+	return revBlockStoreMap
 }
