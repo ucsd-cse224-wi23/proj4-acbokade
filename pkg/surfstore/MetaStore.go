@@ -59,12 +59,18 @@ func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) 
 
 func (m *MetaStore) GetBlockStoreMap(ctx context.Context, blockHashesIn *BlockHashes) (*BlockStoreMap, error) {
 	var blockStoreMap *BlockStoreMap = &BlockStoreMap{}
+	var blockHashes map[string]BlockHashes = make(map[string]BlockHashes)
 	for _, blockHashIn := range blockHashesIn.Hashes {
 		m.rwMutex.RLock()
 		responsibleServer := m.ConsistentHashRing.GetResponsibleServer(blockHashIn)
 		m.rwMutex.RUnlock()
-		blockStoreMap.BlockStoreMap[responsibleServer].Hashes =
-			append(blockStoreMap.BlockStoreMap[responsibleServer].Hashes, blockHashIn)
+		entry, exists := blockHashes[responsibleServer]
+		if exists {
+			entry.Hashes = append(blockHashes[responsibleServer].Hashes, blockHashIn)
+			blockHashes[responsibleServer] = entry
+		} else {
+			blockHashes[responsibleServer] = BlockHashes{Hashes: []string{blockHashIn}}
+		}
 	}
 	return blockStoreMap, nil
 }
