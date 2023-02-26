@@ -128,7 +128,6 @@ func ClientSync(client RPCClient) {
 			}
 		}
 	}
-	// log.Println("filesToDownload", filesToDownload)
 	// Get BlockStoreAddr
 	var blockStoreAddrs []string
 	client.GetBlockStoreAddrs(&blockStoreAddrs)
@@ -174,6 +173,7 @@ func ClientSync(client RPCClient) {
 			}
 		}
 	}
+	// log.Println("filesToDownload", filesToDownload)
 	// log.Println("newFilesAdded", newFilesAdded)
 	// log.Println("editedFiles", editedFiles)
 	// log.Println("filesToDelete", filesToDelete)
@@ -236,8 +236,11 @@ func uploadFile(fileName string, client RPCClient, localIndex map[string]*FileMe
 		blockHashToBlockDataMap[blockHash] = blockData
 	}
 	var blockStoreMap map[string][]string
+	// log.Println("upload hashList", hashList)
 	client.GetBlockStoreMap(hashList, &blockStoreMap)
+	// log.Println("upload blockStoreMap", blockStoreMap)
 	revBlockStoreMap := reverseBlockStoreMap(blockStoreMap)
+	// log.Println("upload revBlockStoreMap", revBlockStoreMap)
 	for blockHash, blockData := range blockHashToBlockDataMap {
 		blockSize := int32(len(blockData))
 		blockObject := Block{BlockData: blockData, BlockSize: blockSize}

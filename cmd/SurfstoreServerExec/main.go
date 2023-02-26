@@ -78,6 +78,7 @@ func main() {
 
 func startServer(hostAddr string, serviceType string, blockStoreAddrs []string) error {
 	_, exists := SERVICE_TYPES[serviceType]
+	// fmt.Println("hostAddr server", hostAddr)
 	if !exists {
 		log.Println("Service type %s not supported", serviceType)
 		return nil
@@ -93,7 +94,7 @@ func startServer(hostAddr string, serviceType string, blockStoreAddrs []string) 
 	}
 
 	listener, err := net.Listen(TCP, hostAddr)
-	fmt.Println("Started listening")
+	// fmt.Println("Started listening")
 	if err != nil {
 		return err
 	}

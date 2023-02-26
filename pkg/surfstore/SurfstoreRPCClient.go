@@ -157,7 +157,13 @@ func (surfClient *RPCClient) GetBlockStoreMap(blockHashesIn []string, blockStore
 		return err
 	}
 	for serverAddr, blockHashes := range retBlockStoreMap.BlockStoreMap {
-		(*blockStoreMap)[serverAddr] = append((*blockStoreMap)[serverAddr], blockHashes.Hashes...)
+		_, exists := (*blockStoreMap)[serverAddr]
+		if exists {
+			(*blockStoreMap)[serverAddr] = append((*blockStoreMap)[serverAddr], blockHashes.Hashes...)
+		} else {
+			(*blockStoreMap) = make(map[string][]string)
+			(*blockStoreMap)[serverAddr] = append((*blockStoreMap)[serverAddr], blockHashes.Hashes...)
+		}
 	}
 
 	// close the connection

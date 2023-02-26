@@ -3,6 +3,7 @@ package surfstore
 import (
 	context "context"
 	// "log"
+	// "fmt"
 	"sync"
 
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -59,19 +60,23 @@ func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) 
 
 func (m *MetaStore) GetBlockStoreMap(ctx context.Context, blockHashesIn *BlockHashes) (*BlockStoreMap, error) {
 	var blockStoreMap *BlockStoreMap = &BlockStoreMap{}
-	var blockHashes map[string]BlockHashes = make(map[string]BlockHashes)
+	var blockHashes map[string]*BlockHashes = make(map[string]*BlockHashes)
+	// fmt.Println("GetBlockStoreMap blockHashesIn", blockHashesIn)
 	for _, blockHashIn := range blockHashesIn.Hashes {
 		m.rwMutex.RLock()
 		responsibleServer := m.ConsistentHashRing.GetResponsibleServer(blockHashIn)
+		// fmt.Println("GetBlockStoreMap responsibleServer", responsibleServer)
 		m.rwMutex.RUnlock()
 		entry, exists := blockHashes[responsibleServer]
 		if exists {
-			entry.Hashes = append(blockHashes[responsibleServer].Hashes, blockHashIn)
+			entry.Hashes = append(entry.Hashes, blockHashIn)
 			blockHashes[responsibleServer] = entry
 		} else {
-			blockHashes[responsibleServer] = BlockHashes{Hashes: []string{blockHashIn}}
+			blockHashes[responsibleServer] = &BlockHashes{Hashes: []string{blockHashIn}}
 		}
 	}
+	blockStoreMap.BlockStoreMap = blockHashes
+	// fmt.Println("GetBlockStoreMap blockStoreMap", blockStoreMap)
 	return blockStoreMap, nil
 }
 
