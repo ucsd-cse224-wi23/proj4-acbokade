@@ -57,6 +57,7 @@ func main() {
 	hostPort := args[0]
 	baseDir := args[1]
 	blockSize, err := strconv.Atoi(args[2])
+	log.Println(baseDir, blockSize)
 	if err != nil {
 		flag.Usage()
 		os.Exit(EX_USAGE)
@@ -69,10 +70,12 @@ func main() {
 	}
 
 	rpcClient := surfstore.NewSurfstoreRPCClient(hostPort, baseDir, blockSize)
+	log.Println(rpcClient)
 	PrintBlocksOnEachServer(rpcClient)
 }
 
 func PrintBlocksOnEachServer(client surfstore.RPCClient) {
+	fmt.Println("PrintBlocksOnEachServer")
 	allAddrs := []string{}
 	err := client.GetBlockStoreAddrs(&allAddrs)
 	if err != nil {
