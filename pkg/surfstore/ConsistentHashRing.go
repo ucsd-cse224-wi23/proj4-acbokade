@@ -17,7 +17,7 @@ func (c ConsistentHashRing) GetResponsibleServer(blockId string) string {
 	}
 	sort.Strings(hashes)
 	var responsibleServerAddr = ""
-	blockHash := c.Hash(blockId)
+	blockHash := blockId
 	firstServerAddr := ""
 	for _, serverHash := range hashes {
 		if len(firstServerAddr) == 0 {
