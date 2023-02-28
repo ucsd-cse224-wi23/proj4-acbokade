@@ -358,10 +358,10 @@ func downloadFile(fileName string, client RPCClient, remoteIndex map[string]*Fil
 func reverseBlockStoreMap(blockStoreMap map[string][]string) map[string]string {
 	var revBlockStoreMap map[string]string = make(map[string]string)
 	for serverAddr, hashes := range blockStoreMap {
-		log.Println("upload serverAddr: ", serverAddr, "len hashes", len(hashes))
+		// log.Println("upload serverAddr: ", serverAddr, "len hashes", len(hashes))
 		for _, hash := range hashes {
 			revBlockStoreMap[hash] = serverAddr
-			log.Println(hash,"->", serverAddr)
+			// log.Println(hash,"->", serverAddr)
 		}
 	}
 	return revBlockStoreMap
