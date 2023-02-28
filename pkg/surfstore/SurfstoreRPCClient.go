@@ -94,7 +94,7 @@ func (surfClient *RPCClient) GetBlockHashes(blockStoreAddr string, blockHashes *
 		conn.Close()
 		return err
 	}
-	blockHashes = &retBlockHashes.Hashes
+	*blockHashes = append(*blockHashes, retBlockHashes.Hashes...)
 
 	// close the connection
 	return conn.Close()
@@ -179,12 +179,13 @@ func (surfClient *RPCClient) GetBlockStoreAddrs(blockStoreAddrs *[]string) error
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	retBlockStoreAddr, err := rpcClient.GetBlockStoreAddrs(ctx, &emptypb.Empty{})
+	log.Println("retBlockStoreAddr", retBlockStoreAddr)
 	if err != nil {
 		conn.Close()
 		return err
 	}
-	blockStoreAddrs = &retBlockStoreAddr.BlockStoreAddrs
-
+	*blockStoreAddrs = append(*blockStoreAddrs, retBlockStoreAddr.BlockStoreAddrs...)
+	log.Println("blockStoreAddrs", blockStoreAddrs)
 	// close the connection
 	return conn.Close()
 }

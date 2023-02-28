@@ -2,7 +2,7 @@ package surfstore
 
 import (
 	context "context"
-	// "log"
+	"log"
 	// "fmt"
 	"sync"
 
@@ -81,7 +81,11 @@ func (m *MetaStore) GetBlockStoreMap(ctx context.Context, blockHashesIn *BlockHa
 }
 
 func (m *MetaStore) GetBlockStoreAddrs(ctx context.Context, _ *emptypb.Empty) (*BlockStoreAddrs, error) {
+	log.Println("metastore BlockStoreAddrs", m.BlockStoreAddrs)
+	m.rwMutex.RLock()
 	var blockStoreAddrs *BlockStoreAddrs = &BlockStoreAddrs{BlockStoreAddrs: m.BlockStoreAddrs}
+	m.rwMutex.RUnlock()
+	log.Println("metastore blockStoreAddrs", blockStoreAddrs)
 	return blockStoreAddrs, nil
 }
 
@@ -89,6 +93,7 @@ func (m *MetaStore) GetBlockStoreAddrs(ctx context.Context, _ *emptypb.Empty) (*
 var _ MetaStoreInterface = new(MetaStore)
 
 func NewMetaStore(blockStoreAddrs []string) *MetaStore {
+	log.Println("meta store ctr BlockStoreAddrs", blockStoreAddrs)
 	return &MetaStore{
 		FileMetaMap:        map[string]*FileMetaData{},
 		BlockStoreAddrs:    blockStoreAddrs,

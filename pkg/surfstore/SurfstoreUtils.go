@@ -131,6 +131,7 @@ func ClientSync(client RPCClient) {
 	// Get BlockStoreAddr
 	var blockStoreAddrs []string
 	client.GetBlockStoreAddrs(&blockStoreAddrs)
+	log.Println("client sync blockStoreAddrs", blockStoreAddrs)
 
 	// Check the blocks to be downloaded
 	for fileToDownload := range filesToDownload {
