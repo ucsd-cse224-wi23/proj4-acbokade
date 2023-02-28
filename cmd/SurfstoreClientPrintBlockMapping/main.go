@@ -57,7 +57,6 @@ func main() {
 	hostPort := args[0]
 	baseDir := args[1]
 	blockSize, err := strconv.Atoi(args[2])
-	log.Println(baseDir, blockSize)
 	if err != nil {
 		flag.Usage()
 		os.Exit(EX_USAGE)
@@ -70,18 +69,16 @@ func main() {
 	}
 
 	rpcClient := surfstore.NewSurfstoreRPCClient(hostPort, baseDir, blockSize)
-	log.Println(rpcClient)
 	PrintBlocksOnEachServer(rpcClient)
 }
 
 func PrintBlocksOnEachServer(client surfstore.RPCClient) {
-	fmt.Println("PrintBlocksOnEachServer")
 	allAddrs := []string{}
 	err := client.GetBlockStoreAddrs(&allAddrs)
 	if err != nil {
 		log.Fatal("[Surfstore RPCClient]:", "Error During Fetching All BlockStore Addresses ", err)
 	}
-	log.Println("allAddrs", allAddrs)
+
 	result := "{"
 	for _, addr := range allAddrs {
 		// fmt.Println("Block Server: ", addr)
@@ -89,7 +86,7 @@ func PrintBlocksOnEachServer(client surfstore.RPCClient) {
 		if err = client.GetBlockHashes(addr, &hashes); err != nil {
 			log.Fatal("[Surfstore RPCClient]:", "Error During Fetching Blocks on Block Server ", err)
 		}
-		log.Println("hashes", hashes)
+
 		for _, hash := range hashes {
 			result += "{" + hash + "," + addr + "},"
 		}
