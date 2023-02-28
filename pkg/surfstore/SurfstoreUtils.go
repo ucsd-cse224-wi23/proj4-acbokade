@@ -117,7 +117,7 @@ func ClientSync(client RPCClient) {
 			}
 			if remoteIndex[fileName].Version == localIndex[fileName].Version {
 				// Check if file is already deleted
-				if (len(remoteIndex[fileName].BlockHashList) == 1 && remoteIndex[fileName].BlockHashList[0] == TOMBSTONE_HASHVALUE) {
+				if len(remoteIndex[fileName].BlockHashList) == 1 && remoteIndex[fileName].BlockHashList[0] == TOMBSTONE_HASHVALUE {
 					continue
 				}
 				// If file doesnt exist locally but is in localIndex, download it
@@ -139,9 +139,8 @@ func ClientSync(client RPCClient) {
 
 	// Check the blocks to be downloaded
 	for fileToDeleteLocally := range filesToDeleteLocally {
-		deleteLocalFile(fileToDeleteLocally, client, remoteIndex, localIndex)	
+		deleteLocalFile(fileToDeleteLocally, client, remoteIndex, localIndex)
 	}
-
 
 	// Check the files which are newly added or edited
 	newFilesAdded := make([]string, 0)
@@ -276,7 +275,7 @@ func uploadFile(fileName string, client RPCClient, localIndex map[string]*FileMe
 	return returnedVersion, err
 }
 
-func deleteLocalFile(fileName string, client RPCClient, remoteIndex map[string]*FileMetaData, localIndex map[string]*FileMetaData) (error) {
+func deleteLocalFile(fileName string, client RPCClient, remoteIndex map[string]*FileMetaData, localIndex map[string]*FileMetaData) error {
 	localIndex[fileName] = remoteIndex[fileName]
 	filePath := filepath.Join(client.BaseDir, fileName)
 	if _, err := os.Stat(filePath); err == nil {
@@ -291,7 +290,7 @@ func deleteLocalFile(fileName string, client RPCClient, remoteIndex map[string]*
 func deleteFile(fileName string, client RPCClient, localIndex map[string]*FileMetaData, blockStoreAddrs []string) (int32, error) {
 	version := localIndex[fileName].Version
 	var tombstoneHashList []string = []string{TOMBSTONE_HASHVALUE}
-	localFileMetadata := FileMetaData{Filename: fileName, Version: version+1, BlockHashList: tombstoneHashList}
+	localFileMetadata := FileMetaData{Filename: fileName, Version: version + 1, BlockHashList: tombstoneHashList}
 	var returnedVersion int32
 	err := client.UpdateFile(&localFileMetadata, &returnedVersion)
 	// log.Println("UpdateFile return version", returnedVersion, err)

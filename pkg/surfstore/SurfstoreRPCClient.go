@@ -100,7 +100,6 @@ func (surfClient *RPCClient) GetBlockHashes(blockStoreAddr string, blockHashes *
 	return conn.Close()
 }
 
-
 func (surfClient *RPCClient) GetFileInfoMap(serverFileInfoMap *map[string]*FileMetaData) error {
 	conn, err := connectToGrpcServer(surfClient.MetaStoreAddr)
 	if err != nil {
@@ -179,13 +178,13 @@ func (surfClient *RPCClient) GetBlockStoreAddrs(blockStoreAddrs *[]string) error
 	// perform the call
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	retBlockStoreAddr, err := rpcClient.GetBlockStoreAddrs(ctx,  &emptypb.Empty{})
+	retBlockStoreAddr, err := rpcClient.GetBlockStoreAddrs(ctx, &emptypb.Empty{})
 	if err != nil {
 		conn.Close()
 		return err
 	}
 	blockStoreAddrs = &retBlockStoreAddr.BlockStoreAddrs
-	
+
 	// close the connection
 	return conn.Close()
 }
