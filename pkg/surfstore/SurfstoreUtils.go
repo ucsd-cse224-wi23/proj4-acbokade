@@ -329,6 +329,10 @@ func downloadFile(fileName string, client RPCClient, remoteIndex map[string]*Fil
 	// 	log.Println("Error in updating local index", err)
 	// }
 	localIndex[fileName] = remoteIndex[fileName]
+	// Nothing to write if file is empty
+	if len(remoteIndex[fileName].BlockHashList) == 1 && remoteIndex[fileName].BlockHashList[0] == EMPTYFILE_HASHVALUE {
+		return nil
+	}
 	fileContent := ""
 	var blockStoreMap map[string][]string
 	client.GetBlockStoreMap(remoteIndex[fileName].BlockHashList, &blockStoreMap)
