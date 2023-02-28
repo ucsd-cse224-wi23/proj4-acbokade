@@ -149,22 +149,23 @@ func (surfClient *RPCClient) GetBlockStoreMap(blockHashesIn []string, blockStore
 	// perform the call
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+	// log.Println("SurfRPClient blockHashesIn length", len(blockHashesIn))
 	var blockHashes *BlockHashes = &BlockHashes{Hashes: blockHashesIn}
 	retBlockStoreMap, err := rpcClient.GetBlockStoreMap(ctx, blockHashes)
 	if err != nil {
 		conn.Close()
 		return err
 	}
+	(*blockStoreMap) = make(map[string][]string)
 	for serverAddr, blockHashes := range retBlockStoreMap.BlockStoreMap {
 		_, exists := (*blockStoreMap)[serverAddr]
 		if exists {
 			(*blockStoreMap)[serverAddr] = append((*blockStoreMap)[serverAddr], blockHashes.Hashes...)
 		} else {
-			(*blockStoreMap) = make(map[string][]string)
 			(*blockStoreMap)[serverAddr] = append((*blockStoreMap)[serverAddr], blockHashes.Hashes...)
 		}
 	}
-
+	// log.Println("rpcClient blockStoreMap", blockStoreMap)
 	// close the connection
 	return conn.Close()
 }
@@ -179,13 +180,13 @@ func (surfClient *RPCClient) GetBlockStoreAddrs(blockStoreAddrs *[]string) error
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	retBlockStoreAddr, err := rpcClient.GetBlockStoreAddrs(ctx, &emptypb.Empty{})
-	log.Println("retBlockStoreAddr", retBlockStoreAddr)
+	// log.Println("retBlockStoreAddr", retBlockStoreAddr)
 	if err != nil {
 		conn.Close()
 		return err
 	}
 	*blockStoreAddrs = append(*blockStoreAddrs, retBlockStoreAddr.BlockStoreAddrs...)
-	log.Println("blockStoreAddrs", blockStoreAddrs)
+	// log.Println("blockStoreAddrs", blockStoreAddrs)
 	// close the connection
 	return conn.Close()
 }

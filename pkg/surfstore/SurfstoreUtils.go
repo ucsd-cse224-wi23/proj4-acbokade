@@ -235,16 +235,20 @@ func uploadFile(fileName string, client RPCClient, localIndex map[string]*FileMe
 		hashList = append(hashList, blockHash)
 		blockHashToBlockDataMap[blockHash] = blockData
 	}
+	// log.Println("upload hashlist length", len(hashList), len(blockHashToBlockDataMap))
 	var blockStoreMap map[string][]string
 	// log.Println("upload hashList", hashList)
 	client.GetBlockStoreMap(hashList, &blockStoreMap)
 	// log.Println("upload blockStoreMap", blockStoreMap)
 	revBlockStoreMap := reverseBlockStoreMap(blockStoreMap)
 	// log.Println("upload revBlockStoreMap", revBlockStoreMap)
+	// log.Println("upload revBlockStoreMap length", len(revBlockStoreMap))
 	for blockHash, blockData := range blockHashToBlockDataMap {
 		blockSize := int32(len(blockData))
 		blockObject := Block{BlockData: blockData, BlockSize: blockSize}
+		// log.Println("upload blockhash", blockHash)
 		blockStoreAddr := revBlockStoreMap[blockHash]
+		// log.Println("upload blockStoreAddr", blockStoreAddr)
 		var success bool
 		err = client.PutBlock(&blockObject, blockStoreAddr, &success)
 		if err != nil {
@@ -354,8 +358,10 @@ func downloadFile(fileName string, client RPCClient, remoteIndex map[string]*Fil
 func reverseBlockStoreMap(blockStoreMap map[string][]string) map[string]string {
 	var revBlockStoreMap map[string]string = make(map[string]string)
 	for serverAddr, hashes := range blockStoreMap {
+		log.Println("upload serverAddr: ", serverAddr, "len hashes", len(hashes))
 		for _, hash := range hashes {
 			revBlockStoreMap[hash] = serverAddr
+			log.Println(hash,"->", serverAddr)
 		}
 	}
 	return revBlockStoreMap

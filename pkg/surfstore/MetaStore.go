@@ -2,7 +2,7 @@ package surfstore
 
 import (
 	context "context"
-	"log"
+	// "log"
 	// "fmt"
 	"sync"
 
@@ -60,32 +60,45 @@ func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) 
 
 func (m *MetaStore) GetBlockStoreMap(ctx context.Context, blockHashesIn *BlockHashes) (*BlockStoreMap, error) {
 	var blockStoreMap *BlockStoreMap = &BlockStoreMap{}
+	blockStoreMap.BlockStoreMap = make(map[string]*BlockHashes)
 	var blockHashes map[string]*BlockHashes = make(map[string]*BlockHashes)
 	// fmt.Println("GetBlockStoreMap blockHashesIn", blockHashesIn)
+	// log.Println("Metastore blockHashesIn length", len(blockHashesIn.Hashes))
 	for _, blockHashIn := range blockHashesIn.Hashes {
 		m.rwMutex.RLock()
 		responsibleServer := m.ConsistentHashRing.GetResponsibleServer(blockHashIn)
 		// fmt.Println("GetBlockStoreMap responsibleServer", responsibleServer)
 		m.rwMutex.RUnlock()
-		entry, exists := blockHashes[responsibleServer]
+		_, exists := blockHashes[responsibleServer]
 		if exists {
-			entry.Hashes = append(entry.Hashes, blockHashIn)
-			blockHashes[responsibleServer] = entry
+			// entry.Hashes = append(entry.Hashes, blockHashIn)
+			blockHashes[responsibleServer].Hashes = append(blockHashes[responsibleServer].Hashes, blockHashIn)
 		} else {
 			blockHashes[responsibleServer] = &BlockHashes{Hashes: []string{blockHashIn}}
 		}
 	}
-	blockStoreMap.BlockStoreMap = blockHashes
+	// log.Println("blockHashes", blockHashes)
+	for server, hashList := range blockHashes {
+		_, exists := blockStoreMap.BlockStoreMap[server]
+		// log.Println("**", server, exists)
+		if exists {
+			blockStoreMap.BlockStoreMap[server].Hashes = append(blockStoreMap.BlockStoreMap[server].Hashes, hashList.Hashes...)
+		} else {
+			blockStoreMap.BlockStoreMap[server] = &BlockHashes{Hashes: hashList.Hashes}
+		}
+	}
+	// log.Println("blockStoreMap", blockStoreMap.BlockStoreMap)
+	// blockStoreMap.BlockStoreMap = blockHashes
 	// fmt.Println("GetBlockStoreMap blockStoreMap", blockStoreMap)
 	return blockStoreMap, nil
 }
 
 func (m *MetaStore) GetBlockStoreAddrs(ctx context.Context, _ *emptypb.Empty) (*BlockStoreAddrs, error) {
-	log.Println("metastore BlockStoreAddrs", m.BlockStoreAddrs)
+	// log.Println("metastore BlockStoreAddrs", m.BlockStoreAddrs)
 	m.rwMutex.RLock()
 	var blockStoreAddrs *BlockStoreAddrs = &BlockStoreAddrs{BlockStoreAddrs: m.BlockStoreAddrs}
 	m.rwMutex.RUnlock()
-	log.Println("metastore blockStoreAddrs", blockStoreAddrs)
+	// log.Println("metastore blockStoreAddrs", blockStoreAddrs)
 	return blockStoreAddrs, nil
 }
 
@@ -93,7 +106,7 @@ func (m *MetaStore) GetBlockStoreAddrs(ctx context.Context, _ *emptypb.Empty) (*
 var _ MetaStoreInterface = new(MetaStore)
 
 func NewMetaStore(blockStoreAddrs []string) *MetaStore {
-	log.Println("meta store ctr BlockStoreAddrs", blockStoreAddrs)
+	// log.Println("meta store ctr BlockStoreAddrs", blockStoreAddrs)
 	return &MetaStore{
 		FileMetaMap:        map[string]*FileMetaData{},
 		BlockStoreAddrs:    blockStoreAddrs,
